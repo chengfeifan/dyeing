@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import BeautifulChart from './components/Chart'
 import { apiProcess, apiSave, apiHistory, apiHistoryItem, apiDownloadBatchZip, apiDownloadCSV } from './api'
 
+const primaryButton =
+  'inline-flex items-center justify-center rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition hover:bg-cyan-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300'
+const subtleButton =
+  'inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-cyan-500/60 hover:text-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300'
+const iconBadge = 'flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300 ring-1 ring-cyan-500/30'
+
 export default function App() {
   const [sample, setSample] = useState<File | null>(null)
   const [water, setWater] = useState<File | null>(null)
@@ -66,67 +72,161 @@ export default function App() {
   }
 
   return (
-    <div className="container">
-      <h2>单染料光谱处理</h2>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-[\'Inter\',_system-ui,_-apple-system,_BlinkMacSystemFont]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.08),transparent_25%),radial-gradient(circle_at_80%_0,rgba(14,165,233,0.06),transparent_30%),radial-gradient(circle_at_70%_70%,rgba(34,211,238,0.05),transparent_30%)]" aria-hidden></div>
 
-      <div className="card">
-        <div className="row">
-          <div>
-            <label>单染料 .spc</label><br />
-            <input type="file" accept=".spc" onChange={e => setSample(e.target.files?.[0] ?? null)} />
+      <div className="relative mx-auto max-w-6xl px-6 py-10 space-y-6">
+        <header className="flex flex-col gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-cyan-900/30 backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[0.35em] text-cyan-400">Spectra Lab</p>
+              <h1 className="text-3xl font-semibold text-slate-50">单染料光谱处理</h1>
+              <p className="text-sm text-slate-400">上传原始光谱、设置处理参数，并保存或下载结果。</p>
+            </div>
+            <div className="flex items-center gap-3 text-sm text-slate-400">
+              <span className={iconBadge}>λ</span>
+              <div>
+                <p className="font-semibold text-slate-100">工业暗调 UI</p>
+                <p className="text-xs text-slate-400">Tailwind 风格 · 高对比度</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <label>清水 .spc</label><br />
-            <input type="file" accept=".spc" onChange={e => setWater(e.target.files?.[0] ?? null)} />
+        </header>
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-slate-950/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-50">单染料 .spc</p>
+                <p className="text-xs text-slate-500">选择待处理的样品数据</p>
+              </div>
+            </div>
+            <label className="mt-4 flex h-28 cursor-pointer items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-900/80 text-sm text-slate-400 transition hover:border-cyan-500/60 hover:text-cyan-100">
+              <input type="file" className="hidden" accept=".spc" onChange={e => setSample(e.target.files?.[0] ?? null)} />
+              {sample ? sample.name : '点击上传文件'}
+            </label>
           </div>
-          <div>
-            <label>暗光 .spc</label><br />
-            <input type="file" accept=".spc" onChange={e => setDark(e.target.files?.[0] ?? null)} />
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-slate-950/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-50">清水 .spc</p>
+                <p className="text-xs text-slate-500">用于校正的参考光谱</p>
+              </div>
+            </div>
+            <label className="mt-4 flex h-28 cursor-pointer items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-900/80 text-sm text-slate-400 transition hover:border-cyan-500/60 hover:text-cyan-100">
+              <input type="file" className="hidden" accept=".spc" onChange={e => setWater(e.target.files?.[0] ?? null)} />
+              {water ? water.name : '点击上传文件'}
+            </label>
           </div>
-        </div>
-        <div className="row" style={{ marginTop: 8 }}>
-          <label><input type="checkbox" checked={outCorr} onChange={e => setOutCorr(e.target.checked)} /> I_corr</label>
-          <label><input type="checkbox" checked={outT} onChange={e => setOutT(e.target.checked)} /> T</label>
-          <label><input type="checkbox" checked={outA} onChange={e => setOutA(e.target.checked)} /> A</label>
-          <label><input type="checkbox" checked={smoothEnabled} onChange={e => setSmoothEnabled(e.target.checked)} /> 启用平滑</label>
-          <label>窗口 <input type="number" value={smoothWindow} onChange={e => setSmoothWindow(parseInt(e.target.value||'11'))} style={{ width: 72 }} /></label>
-          <label>阶数 <input type="number" value={smoothOrder} onChange={e => setSmoothOrder(parseInt(e.target.value||'3'))} style={{ width: 56 }} /></label>
-          <button onClick={doPreview}>预览处理</button>
-        </div>
-      </div>
 
-      {x.length > 0 && (
-        <div className="card">
-          <h3>预览</h3>
-          <BeautifulChart x={x} series={series} />
-        </div>
-      )}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-slate-950/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-50">暗光 .spc</p>
+                <p className="text-xs text-slate-500">用于背景扣除的暗电流</p>
+              </div>
+            </div>
+            <label className="mt-4 flex h-28 cursor-pointer items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-900/80 text-sm text-slate-400 transition hover:border-cyan-500/60 hover:text-cyan-100">
+              <input type="file" className="hidden" accept=".spc" onChange={e => setDark(e.target.files?.[0] ?? null)} />
+              {dark ? dark.name : '点击上传文件'}
+            </label>
+          </div>
+        </section>
 
-      <div className="card">
-        <div className="row">
-          <label>名称：<input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="如：2025-12-样品A" /></label>
-          <button onClick={doSave}>保存 JSON</button>
-          <button className="secondary" onClick={() => apiDownloadBatchZip()}>批量导出 ZIP</button>
-        </div>
-      </div>
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-slate-950/50 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-50">处理选项</p>
+              <p className="text-xs text-slate-500">选择输出、平滑窗口与阶数</p>
+            </div>
+            <button className={primaryButton} onClick={doPreview}>预览处理</button>
+          </div>
 
-      <div className="card">
-        <h3>历史记录</h3>
-        <table className="table">
-          <thead><tr><th>名称</th><th>时间</th><th>操作</th></tr></thead>
-          <tbody>
-            {hist.map(h => (
-              <tr key={h.file}>
-                <td>{h.name}</td>
-                <td>{h.timestamp}</td>
-                <td>
-                  <button className="secondary" onClick={() => loadItem(h.name)}>预览</button>{' '}
-                  <button className="secondary" onClick={() => apiDownloadCSV(h.name)}>CSV</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            <label className="flex items-center gap-3 rounded-xl border border-slate-800/80 bg-slate-900/70 px-4 py-3 text-sm text-slate-200">
+              <input type="checkbox" className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-2 focus:ring-cyan-400/60" checked={outCorr} onChange={e => setOutCorr(e.target.checked)} />
+              I_corr 输出
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-slate-800/80 bg-slate-900/70 px-4 py-3 text-sm text-slate-200">
+              <input type="checkbox" className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-2 focus:ring-cyan-400/60" checked={outT} onChange={e => setOutT(e.target.checked)} />
+              T 输出
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-slate-800/80 bg-slate-900/70 px-4 py-3 text-sm text-slate-200">
+              <input type="checkbox" className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-2 focus:ring-cyan-400/60" checked={outA} onChange={e => setOutA(e.target.checked)} />
+              A 输出
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-slate-800/80 bg-slate-900/70 px-4 py-3 text-sm text-slate-200">
+              <input type="checkbox" className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-2 focus:ring-cyan-400/60" checked={smoothEnabled} onChange={e => setSmoothEnabled(e.target.checked)} />
+              启用平滑
+            </label>
+            <label className="flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/70 px-4 py-3 text-sm text-slate-200">
+              <span>窗口</span>
+              <input type="number" value={smoothWindow} onChange={e => setSmoothWindow(parseInt(e.target.value || '11'))} className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 focus:outline-none" />
+            </label>
+            <label className="flex items-center justify-between rounded-xl border border-slate-800/80 bg-slate-900/70 px-4 py-3 text-sm text-slate-200">
+              <span>阶数</span>
+              <input type="number" value={smoothOrder} onChange={e => setSmoothOrder(parseInt(e.target.value || '3'))} className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 focus:outline-none" />
+            </label>
+          </div>
+        </section>
+
+        {x.length > 0 && (
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-2xl shadow-cyan-900/40">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-50">预览</p>
+                <p className="text-xs text-slate-500">滚轮/拖拽可缩放，悬停查看数值</p>
+              </div>
+            </div>
+            <BeautifulChart x={x} series={series} />
+          </section>
+        )}
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-slate-950/50 space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex flex-1 min-w-[220px] items-center gap-3 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-100">
+              <span className="text-slate-400">名称</span>
+              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="如：2025-12-样品A" className="flex-1 bg-transparent text-slate-50 placeholder:text-slate-600 focus:outline-none" />
+            </label>
+            <button className={primaryButton} onClick={doSave}>保存 JSON</button>
+            <button className={subtleButton} onClick={() => apiDownloadBatchZip()}>批量导出 ZIP</button>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-slate-950/50 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-50">历史记录</p>
+              <p className="text-xs text-slate-500">查看历史样本并再次导出</p>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-slate-800">
+            <table className="min-w-full divide-y divide-slate-800 text-sm">
+              <thead className="bg-slate-900/90 text-slate-400">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold">名称</th>
+                  <th className="px-4 py-3 text-left font-semibold">时间</th>
+                  <th className="px-4 py-3 text-left font-semibold">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {hist.map(h => (
+                  <tr key={h.file} className="bg-slate-950/60 hover:bg-slate-900/70">
+                    <td className="px-4 py-3 text-slate-100">{h.name}</td>
+                    <td className="px-4 py-3 text-slate-400">{h.timestamp}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button className={subtleButton} onClick={() => loadItem(h.name)}>预览</button>
+                        <button className={subtleButton} onClick={() => apiDownloadCSV(h.name)}>CSV</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </div>
   )

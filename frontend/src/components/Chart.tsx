@@ -1,148 +1,146 @@
-import React, { useMemo } from 'react';
-import ReactECharts from 'echarts-for-react';
-import * as echarts from 'echarts'; // 引入核心库用于渐变色等高级功能
+import React, { useMemo } from 'react'
+import ReactECharts from 'echarts-for-react'
+import * as echarts from 'echarts'
 
-// 定义 Props 类型
+const industrialDarkTheme = {
+  backgroundColor: '#0b1220',
+}
+
+echarts.registerTheme('industrial-dark', industrialDarkTheme)
+
 type ChartProps = {
-  x: number[];
-  series: Record<string, number[]>;
-  height?: string; // 可选：允许自定义高度
-};
+  x: number[]
+  series: Record<string, number[]>
+  height?: string
+}
 
-export default function BeautifulChart({ x, series, height = '400px' }: ChartProps) {
-  
-  // 使用 useMemo 缓存配置，防止不必要的重渲染
+export default function BeautifulChart({ x, series, height = '440px' }: ChartProps) {
   const option = useMemo(() => {
-    // 1. 处理 X 轴标签
-    const labels = x.map((v) => v.toFixed(2));
+    const labels = x.map((v) => v.toFixed(2))
+    const neonPalette = ['#22d3ee', '#a855f7', '#f472b6', '#38bdf8', '#f59e0b', '#10b981', '#fb7185', '#8b5cf6']
 
-    // 2. 处理 Series 数据，添加美化样式
     const datasets = Object.entries(series).map(([name, data]) => ({
       name,
       type: 'line',
       data,
-      smooth: true, // 【美化】开启平滑曲线
-      showSymbol: false, // 【美化】默认不显示拐点圆圈，悬停时才显示
+      smooth: true,
+      showSymbol: false,
       symbolSize: 8,
       lineStyle: {
-        width: 3, // 【美化】加粗线条
-        shadowColor: 'rgba(0,0,0,0.3)', // 【美化】线条阴影
-        shadowBlur: 10,
-        shadowOffsetY: 5
+        width: 3,
+        shadowColor: 'rgba(34, 211, 238, 0.25)',
+        shadowBlur: 14,
+        shadowOffsetY: 8,
       },
       areaStyle: {
-        opacity: 0.15, // 【美化】区域填充，增加通透感
+        opacity: 0.08,
       },
       emphasis: {
-        focus: 'series', // 【交互】悬停时高亮当前线条，淡化其他
+        focus: 'series',
       },
-    }));
+    }))
 
     return {
-      // 调色盘 (可选，ECharts 默认的也可以，这里提供一套清新的配色)
-      color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4'],
-      
-      backgroundColor: '#fff', // 背景色
-      
+      color: neonPalette,
+      backgroundColor: '#0b1220',
       title: {
-        text: '数据趋势分析', // 可根据需求通过 props 传入
-        left: 'center',
+        text: '光谱曲线预览',
+        left: 'left',
         textStyle: {
-            color: '#333',
-            fontSize: 16,
-            fontWeight: 'normal'
+          color: '#e2e8f0',
+          fontSize: 16,
+          fontWeight: '600',
         },
-        top: 10
+        top: 6,
       },
-
-      // 提示框组件
       tooltip: {
-        trigger: 'axis', // 坐标轴触发，主要用于柱状图，折线图等
+        trigger: 'axis',
         axisPointer: {
-          type: 'cross', // 十字准星指示器
+          type: 'cross',
           label: {
-            backgroundColor: '#6a7985'
-          }
+            backgroundColor: '#0ea5e9',
+            color: '#0b1220',
+          },
+          lineStyle: {
+            color: '#22d3ee',
+            width: 1.2,
+            opacity: 0.8,
+          },
         },
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderWidth: 0,
-        padding: 10,
+        backgroundColor: 'rgba(15,23,42,0.94)',
+        borderColor: '#22d3ee',
+        borderWidth: 1,
+        padding: 12,
         textStyle: {
-            color: '#333'
+          color: '#e2e8f0',
         },
-        extraCssText: 'box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);' // 添加漂亮的 CSS 阴影
       },
-
-      // 图例组件
       legend: {
         data: Object.keys(series),
-        top: 40,
-        icon: 'roundRect', // 图例形状
+        top: 32,
+        icon: 'roundRect',
+        textStyle: { color: '#cbd5e1' },
       },
-
-      // 绘图网格
       grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '10%', // 留出空间给 dataZoom
-        containLabel: true
+        left: '4%',
+        right: '3%',
+        bottom: '12%',
+        containLabel: true,
       },
-
-      // 工具栏 (下载图片等)
       toolbox: {
         feature: {
-          saveAsImage: { title: '保存为图片' }
-        }
+          saveAsImage: { title: '保存为图片' },
+        },
+        iconStyle: { borderColor: '#94a3b8' },
+        right: 10,
       },
-
-      // 区域缩放 (如果数据量大非常有用)
       dataZoom: [
         {
-          type: 'inside', // 支持鼠标滚轮缩放
+          type: 'inside',
           start: 0,
-          end: 100
+          end: 100,
+          minValueSpan: 10,
         },
         {
-          type: 'slider', // 下方滑块
-          bottom: 0,
-          height: 20,
+          type: 'slider',
+          bottom: 6,
+          height: 18,
           borderColor: 'transparent',
-          handleSize: '80%'
-        }
+          backgroundColor: 'rgba(51,65,85,0.6)',
+          handleStyle: { color: '#22d3ee' },
+          textStyle: { color: '#94a3b8' },
+        },
       ],
-
       xAxis: {
         type: 'category',
-        boundaryGap: false, // 【美化】折线从 X 轴边缘开始
+        boundaryGap: false,
         data: labels,
-        axisLine: { lineStyle: { color: '#ccc' } },
-        axisLabel: { color: '#666' },
-        axisTick: { show: false } // 隐藏刻度线
+        axisLine: { lineStyle: { color: '#1f2937' } },
+        axisLabel: { color: '#cbd5e1' },
+        axisTick: { show: false },
       },
-
       yAxis: {
         type: 'value',
         splitLine: {
           show: true,
           lineStyle: {
-            type: 'dashed', // 【美化】虚线网格，更轻量
-            color: '#eee'
-          }
+            type: 'dashed',
+            color: '#1f2937',
+          },
         },
-        axisLabel: { color: '#666' }
+        axisLabel: { color: '#cbd5e1' },
       },
-
-      series: datasets
-    };
-  }, [x, series]);
+      series: datasets,
+    }
+  }, [x, series])
 
   return (
-    <div style={{ width: '100%', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-      <ReactECharts 
-        option={option} 
-        style={{ height: height, width: '100%' }} 
-        theme={"light"}
+    <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 shadow-inner shadow-cyan-900/30">
+      <ReactECharts
+        option={option}
+        style={{ height: height, width: '100%' }}
+        theme={'industrial-dark'}
       />
     </div>
-  );
+  )
 }
