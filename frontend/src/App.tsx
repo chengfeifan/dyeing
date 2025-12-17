@@ -52,7 +52,7 @@ export default function App() {
     if (!name) { alert('请输入名称'); return }
     const data: Record<string, number[]> = { lambda: proc.x, ...proc.series }
     await apiSave(name, data, { from: 'ui' })
-    alert('已保存 JSON')
+    alert('已保存至数据库')
     refreshHistory()
   }
 
@@ -189,7 +189,7 @@ export default function App() {
               <span className="text-slate-400">名称</span>
               <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="如：2025-12-样品A" className="flex-1 bg-transparent text-slate-50 placeholder:text-slate-600 focus:outline-none" />
             </label>
-            <button className={primaryButton} onClick={doSave}>保存 JSON</button>
+            <button className={primaryButton} onClick={doSave}>保存记录</button>
             <button className={subtleButton} onClick={() => apiDownloadBatchZip()}>批量导出 ZIP</button>
           </div>
         </section>
