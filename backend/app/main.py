@@ -12,7 +12,7 @@ from .core import (
     read_spc_first_xy, interp_to, compute_corrected,
     poly_smooth, build_export_columns, ndarray_to_list_dict
 )
-from .storage import save_json, list_history, load_json, HISTORY_DIR
+from .storage import save_json, list_history, load_json
 
 app = FastAPI(title="Spectra Processor API", version="1.0.0")
 
@@ -77,7 +77,7 @@ async def process_spectra(
 async def save_result(payload: SavePayload):
     try:
         out = save_json(payload.name, payload.data, payload.meta)
-        return {"ok": True, "file": out.name}
+        return {"ok": True, "name": out["name"], "timestamp": out["timestamp"]}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -107,20 +107,20 @@ async def history_item_csv(name: str):
 
 @app.get("/export/batch")
 async def export_batch_zip():
-    files = sorted(HISTORY_DIR.glob("*.json"))
-    if not files:
-        return JSONResponse({"ok": False, "message": "历史目录暂无 JSON"}, status_code=404)
+    histories = list_history()
+    if not histories:
+        return JSONResponse({"ok": False, "message": "历史目录暂无数据"}, status_code=404)
 
     mem = io.BytesIO()
     with zipfile.ZipFile(mem, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for p in files:
+        for item in histories:
             try:
-                obj = load_json(p.name)
+                obj = load_json(item["name"])
                 data = obj.get("data", {})
                 if data:
                     df = pd.DataFrame(data)
                     csv_bytes = df.to_csv(index=False).encode("utf-8")
-                    zf.writestr(f"{p.stem}.csv", csv_bytes)
+                    zf.writestr(f"{item['name']}.csv", csv_bytes)
             except Exception:
                 pass
     mem.seek(0)
